@@ -21,9 +21,9 @@ int main(){
 	std::vector<int> col,col2;
 	std::vector<double> val,val2;
 	std::vector<double> rhs,rhs2;
-	std::vector<int> ptrCoarse;
-	std::vector<int> colCoarse;
-	std::vector<double> valCoarse;
+	std::vector<int> ptrCoarse,ptrcoarse2;
+	std::vector<int> colCoarse,colcoarse2;
+	std::vector<double> valCoarse,valcoarse2;
 	std::vector<double> realsol,sol2,sol3;
 
 	/*
@@ -32,24 +32,26 @@ int main(){
 	 * iter = amount of iterations every amg step
 	 */
 
-	int n= 9;
+	int n= 71;
 	int iter = 5;
 
 	//Create matrix that is a solution of the poisson problem with boudary condition 0;
 	poisson(n,ptr,col,val,rhs);
 	std::vector<double> sol1;
+	for (int i = 0; i < rhs.size(); ++i) {
+		    sol1.push_back(0);// initialization of the solution vector
+		    }
+	realsol = sol1;
+	sol3 = sol1;
+	//Create solution vector with a lot of gs iterations to compare.
+	realsol = GS(500,ptr,col,val,rhs,sol1);
 	//start clock to check time it take to do algorithn
 	std::clock_t start;
 	double duration,duration2;
 
 	start = std::clock();
-	for (int i = 0; i < rhs.size(); ++i) {
-	    	  sol1.push_back(0);// initialization of the solution vector
-	    	}
-	realsol = sol1;
-	sol3 = sol1;
-	//Create solution vector with a lot of gs iterations to compare.
-	realsol = GS(500,ptr,col,val,rhs,sol1);
+
+
 
 	/*for (std::vector<double>::const_iterator i = realsol.begin(); i != realsol.end(); ++i){
 			std::cout << *i<< ' ';}
@@ -99,13 +101,13 @@ int main(){
 	sol = GS(iter,ptr,col,val,rhs,sol);
 	//end clock for amg algorithm
 	duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-	sol3 = GS(4*iter,ptr,col,val,rhs,sol3);
+	sol3 = GS(5*iter,ptr,col,val,rhs,sol3);
 	//end clock for normal gauss seidel to compare
-	duration2 = ( std::clock() - duration ) / (double) CLOCKS_PER_SEC;
+	duration2 = (( std::clock() - start ) / (double) CLOCKS_PER_SEC)- duration;
 	double errorNorm= norm(vectorSubstract(realsol,sol3))/norm(realsol);
 	double errorNorm2= norm(vectorSubstract(realsol,sol))/norm(realsol);
-	std::cout <<"norm amg:"<< errorNorm << "\n";
-	std::cout <<"norm GS:"<< errorNorm2 << "\n";
+	std::cout <<"norm GS:"<< errorNorm << "\n";
+	std::cout <<"norm amg:"<< errorNorm2 << "\n";
 	std::cout <<"duration amg:"<< duration << "\n";
 	std::cout <<"duration GS:"<< duration2 << "\n";
 	/*for (std::vector<double>::const_iterator i = sol.begin(); i != sol.end(); ++i){
