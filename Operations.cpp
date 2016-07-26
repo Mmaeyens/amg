@@ -58,6 +58,16 @@ vector<double> vectorSubstract(vector<double> x,vector<double> y){
 	}
 	return x;
 }
+
+double norm(vector<double> input){
+	double result =0;
+	for (int i =0; i<input.size();++i){
+		result += input[i]*input[i];
+	}
+	result = sqrt(result);
+	return result;
+}
+
 vector<double> vectorAdd(vector<double> x,vector<double> y){
 	for (int i = 0; i < x.size();++i){
 		x[i]=x[i] + y[i];

@@ -13,6 +13,7 @@
 //#include <iostream>
 //#include <fstream>
 #include <vector>
+#include <math.h>
 using namespace std;
 
 vector<double> crsVectTransposeMult(std::vector<int>    &ptr,
@@ -30,6 +31,8 @@ vector<double> vectorSubstract(vector<double> x,
 
 vector<double> vectorAdd(vector<double> x,
 						 vector<double> y);
+
+double norm(vector<double> input);
 
 
 #endif /* SRC_OPERATIONS_H_ */

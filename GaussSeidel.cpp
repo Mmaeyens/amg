@@ -25,7 +25,7 @@ vector<double> GS(int iterations,
         for(int i = 0; i < rhs.size(); ++i) {
             double sum1 = 0.0; // first sum coef
             double sum2 = 0.0;
-            int diag =4;
+            int diag = 4;
             int start = ptr[i];
             int end = ptr[i+1];
             for(;start < end; ++start){
@@ -50,7 +50,7 @@ vector<double> GS(int iterations,
                     sum2 += val[j] * oldsol[col[j]];
                 }
             }
-            newsol[i] = (rhs[i] - sum1 - sum2)/(val[0]);
+            newsol[i] = (rhs[i] - sum1 - sum2)/(diag);
 
         }
         oldsol = newsol;
