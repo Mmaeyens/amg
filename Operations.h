@@ -34,5 +34,10 @@ vector<double> vectorAdd(vector<double> x,
 
 double norm(vector<double> input);
 
+vector<double> coarsenVec(int n,
+							   vector<double> in);
+
+vector<double> interpolateVec(int n,
+							   vector<double> in);
 
 #endif /* SRC_OPERATIONS_H_ */

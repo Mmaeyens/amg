@@ -17,25 +17,19 @@ vector<double> GS(int iterations,
                                std::vector<double> oldsol)
 {
     vector<double> residual = rhs;
-    vector<double> newsol=rhs;
-    for (int i = 0; i < rhs.size(); ++i) {
-        newsol[i] =0.0;// initialization of the solution vector
-    }
+    vector<double> newsol=oldsol;
     for (int z=0;z<iterations;++z){
         for(int i = 0; i < rhs.size(); ++i) {
             double sum1 = 0.0; // first sum coef
             double sum2 = 0.0;
-            int diag = 4;
+            double diag = val[0];
             int start = ptr[i];
             int end = ptr[i+1];
             for(;start < end; ++start){
-
                 int j=start;
                 if(col[j] < i){
                     sum1 += val[j] * newsol[col[j]];
-
                 }
-
                 else{
                     break;
                 }
@@ -44,7 +38,6 @@ vector<double> GS(int iterations,
                 diag=val[start];
             }
             for(;start < end; ++start){
-
                 int j=start;
                 if(col[j]  > i){
                     sum2 += val[j] * oldsol[col[j]];

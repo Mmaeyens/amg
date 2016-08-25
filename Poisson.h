@@ -19,7 +19,7 @@ int poisson(int n,
             std::vector<int> &ptr,
             std::vector<int> &col,
             std::vector<double> &val,
-            std::vector<double> &rhs);
+            std::vector<double> &rhs,double h);
 
 
 #endif /* SRC_POISSON_H_ */

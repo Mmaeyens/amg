@@ -4,7 +4,7 @@
  *  Created on: Jul 11, 2016
  *      Author: Jean23
  */
-
+using namespace std;
 #include "Poisson.h"
 #include "Coarsening.h"
 #include "GaussSeidel.h"
@@ -15,93 +15,80 @@
 #include <fstream>
 #include <ctime>
 
+vector<double> recursive(int iter,int N,double H,vector<double> U){
+	std::cout << H << "\n";
+	vector<double> val2,rhs2,sol2;
+	vector<int> col2,ptr2;
+	//Create matrix that is a solution of the homogenous poisson problem;
+	poisson(N,ptr2,col2,val2,rhs2,H);
+
+	for (int i = 0; i < rhs2.size(); ++i) {
+			sol2.push_back(0.0);// initialization of the solution vector
+			}
+	//if N<4 algorithm won't work anymore and N needs to be even
+	if (N%2 == 0 && N!=4){
+		sol2 = GS(iter,ptr2,col2,val2,U,sol2);
+		vector<double> mult =crsVectMult(ptr2,col2,val2,sol2);
+
+		mult = vectorSubstract(U,mult);
+		mult = coarsenVec(N,mult);
+		U = recursive(iter,N/2,H*2,mult);
+		sol2 = vectorAdd(U,sol2);
+	}
+	U = interpolateVec(N*2,sol2);
+	return U;
+}
 
 int main(){
-	std::vector<int> ptr,ptr2;
-	std::vector<int> col,col2;
-	std::vector<double> val,val2;
-	std::vector<double> rhs,rhs2;
-	std::vector<int> ptrCoarse,ptrcoarse2;
-	std::vector<int> colCoarse,colcoarse2;
-	std::vector<double> valCoarse,valcoarse2;
-	std::vector<double> realsol,sol2,sol3;
+	std::vector<int> ptr;
+	std::vector<int> col;
+	std::vector<double> val;
+	std::vector<double> rhs;
+	std::vector<double> realsol,sol,sol3,sol4;
 
 	/*
 	 * VARIABLES:
-	 * n = size poission problem
+	 * N = size poisson problem (HAS TO BE A MULTIPLE OF 2 AND BIGGER OR EQUAL TO 4)
 	 * iter = amount of iterations every amg step
+	 *
 	 */
 
-	int n= 71;
-	int iter = 5;
-
-	//Create matrix that is a solution of the poisson problem with boudary condition 0;
-	poisson(n,ptr,col,val,rhs);
-	std::vector<double> sol1;
+	int N=128;
+	int iter = 6;
+	double H = 1.0/(N+1);
+	//Create matrix that is a solution of the homogenous poisson problem;
+	poisson(N,ptr,col,val,rhs,H);
 	for (int i = 0; i < rhs.size(); ++i) {
-		    sol1.push_back(0);// initialization of the solution vector
+		    sol.push_back(0);// initialization of the solution vector
 		    }
-	realsol = sol1;
-	sol3 = sol1;
-	//Create solution vector with a lot of gs iterations to compare.
-	realsol = GS(500,ptr,col,val,rhs,sol1);
-	//start clock to check time it take to do algorithn
+	realsol = sol;
+	sol3= sol;
+	//Create solution vector with a lot of gs iterations to compare for error calculation.
+	realsol = GS(5000,ptr,col,val,rhs,sol);
+	//start clock to check time it takes to do algorithm
 	std::clock_t start;
 	double duration,duration2;
 
 	start = std::clock();
-
-
-
-	/*for (std::vector<double>::const_iterator i = realsol.begin(); i != realsol.end(); ++i){
-			std::cout << *i<< ' ';}
-			std::cout << '\n';*/
-
-	//Do 5 gs iterations to coarsen the problem
-	sol1 = GS(iter,ptr,col,val,rhs,sol1);
-	/*for (std::vector<double>::const_iterator i = sol1.begin(); i != sol1.end(); ++i){
-				std::cout << *i<< ' ';}
-				std::cout << '\n';*/
-
-	//calculate residual
-	vector<double> mult =crsVectMult(ptr,col,val,sol1);
-	vector<double> residual = vectorSubstract(rhs,mult);
-
-	//create reduction vector
-	createCoarse(n,ptrCoarse,colCoarse,valCoarse);
-
-	//Calculate new residual with reduction vector
-	residual = crsVectMult(ptrCoarse,colCoarse,valCoarse,residual);
-	/*for (std::vector<double>::const_iterator i = residual.begin(); i != residual.end(); ++i){
-			    std::cout << *i<< ' ';}
-				std::cout << '\n';*/
-
-	//Create reduced vector of poisson problen
-	poisson((n+1)/2,ptr2,col2,val2,rhs2);
-	for (int i = 0; i < rhs2.size(); ++i) {
-		    sol2.push_back(0);// initialization of the solution vector
-		    }
-
-	//do 5 Gs iterations on current solution
-	sol2 = GS(iter,ptr2,col2,val2,residual,sol2);
-
-	//interpolate solution vector
-	sol2 = crsVectTransposeMult(ptrCoarse,colCoarse,valCoarse,sol2);
-	/*for (std::vector<double>::const_iterator i = sol2.begin(); i != sol2.end(); ++i){
-						    std::cout << *i<< ' ';}
-							std::cout << '\n';*/
-
-	//sum the 2 solution vectors
-	std::vector<double> sol = vectorAdd(sol1,sol2);
-	/*for (std::vector<double>::const_iterator i = sol.begin(); i != sol.end(); ++i){
-					    std::cout << *i<< ' ';}
-						std::cout << '\n';*/
-
-	//a few more  gs iterations starting from the current solution
+	//Do "iter" gs iterations to smooth the problem
 	sol = GS(iter,ptr,col,val,rhs,sol);
+	//Calculate Uh
+	vector<double> mult =crsVectMult(ptr,col,val,sol);
+	//Calculate residual
+	mult = vectorSubstract(rhs,mult);
+	//project residual on coarser matrix
+	mult = coarsenVec(N,mult);
+	//start recursive algorithm
+	mult = recursive(iter,N/2,H*2,mult);
+	//add E1 to Uh
+	sol = vectorAdd(mult,sol);
+	//do some post smoothing iterations
+	sol = GS(iter,ptr,col,val,rhs,sol);
+
 	//end clock for amg algorithm
 	duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-	sol3 = GS(5*iter,ptr,col,val,rhs,sol3);
+
+	sol3 = GS(3*iter,ptr,col,val,rhs,sol3);
 	//end clock for normal gauss seidel to compare
 	duration2 = (( std::clock() - start ) / (double) CLOCKS_PER_SEC)- duration;
 	double errorNorm= norm(vectorSubstract(realsol,sol3))/norm(realsol);
@@ -116,6 +103,8 @@ int main(){
 
 	return 1;
 }
+
+
 
 
 
